@@ -110,7 +110,7 @@ def verify_consistency(petri_net):
 
 
 if __name__ == "__main__":
-    filename = 'test_task5.pnml'
+    filename = 'test_task5.pnml' # đổi tên file để lấy dữ liệu cho từng task
 
     my_net = parse_pnml(filename)
     
