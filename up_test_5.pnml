@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.pnml.org/version-2009/std">
+  <net id="GridWorld" type="http://www.pnml.org/version-2009/grammar/ptnet">
+    <page id="page1">
+      <place id="cell_00"> <initialMarking><text>1</text></initialMarking> </place> <place id="cell_01"> </place>
+      <place id="cell_10"> </place>
+      <place id="cell_11"> </place> <transition id="move_00_to_01"></transition>
+      <arc source="cell_00" target="move_00_to_01"/> <arc source="move_00_to_01" target="cell_01"/>
+
+      <transition id="move_00_to_10"></transition>
+      <arc source="cell_00" target="move_00_to_10"/> <arc source="move_00_to_10" target="cell_10"/>
+
+      <transition id="move_01_to_00"></transition> <arc source="cell_01" target="move_01_to_00"/> <arc source="move_01_to_00" target="cell_00"/>
+
+      <transition id="move_01_to_11"></transition>
+      <arc source="cell_01" target="move_01_to_11"/> <arc source="move_01_to_11" target="cell_11"/>
+
+      <transition id="move_10_to_00"></transition> <arc source="cell_10" target="move_10_to_00"/> <arc source="move_10_to_00" target="cell_00"/>
+
+      <transition id="move_10_to_11"></transition>
+      <arc source="cell_10" target="move_10_to_11"/> <arc source="move_10_to_11" target="cell_11"/>
+
+      <transition id="move_11_to_01"></transition>
+      <arc source="cell_11" target="move_11_to_01"/> <arc source="move_11_to_01" target="cell_01"/>
+    </page>
+  </net>
+</pnml>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.pnml.org/version-2009/std">
+  <net id="ErrorDuplicate" type="http://www.pnml.org/version-2009/grammar/ptnet">
+    <page id="page1">
+      <place id="p1">
+        <initialMarking><text>1</text></initialMarking>
+      </place>
+      
+      <transition id="t1"></transition>
+      
+      <place id="p1">
+        <initialMarking><text>5</text></initialMarking>
+      </place>
+      
+      <arc id="a1" source="p1" target="t1"/>
+    </page>
+  </net>
+</pnml>
