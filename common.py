@@ -3,7 +3,7 @@ from pnml_parser import parse_pnml
 
 
 #đổi file input ở đây
-DEFAULT_FILENAME = "test_task3.pnml" 
+DEFAULT_FILENAME = "test_task4.pnml" 
 
 def get_petri_net_data():
     """

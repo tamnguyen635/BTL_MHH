@@ -215,7 +215,7 @@ def parse_pnml(file_path):
 # CHẠY THỬ
 # ==========================================
 if __name__ == "__main__":
-    pnml_file = "test_task3.pnml"
+    pnml_file = "test_task4.pnml"
     
     data = parse_pnml(pnml_file)
     
