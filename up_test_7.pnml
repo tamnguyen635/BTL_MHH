@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.pnml.org/version-2009/std">
+  <net id="DocProcess" type="http://www.pnml.org/version-2009/grammar/ptnet">
+    <page id="page1">
+      <place id="p_draft">
+        <initialMarking><text>1</text></initialMarking>
+      </place>
+      <place id="p_review"></place>
+      <place id="p_signed"></place> <transition id="t_submit"></transition>
+      <arc source="p_draft" target="t_submit"/>
+      <arc source="t_submit" target="p_review"/>
+
+      <transition id="t_approve"></transition>
+      <arc source="p_review" target="t_approve"/>
+      <arc source="t_approve" target="p_signed"/>
+
+      <transition id="t_reject"></transition>
+      <arc source="p_review" target="t_reject"/>
+      <arc source="t_reject" target="p_draft"/>
+    </page>
+  </net>
+</pnml>

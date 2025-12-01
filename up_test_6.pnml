@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.pnml.org/version-2009/std">
+  <net id="TrafficLight" type="http://www.pnml.org/version-2009/grammar/ptnet">
+    <page id="page1">
+      <place id="p_red">
+        <initialMarking><text>1</text></initialMarking>
+      </place>
+      <place id="p_green"></place>
+      <place id="p_yellow"></place>
+
+      <transition id="t_red_to_green"></transition>
+      <arc source="p_red" target="t_red_to_green"/>
+      <arc source="t_red_to_green" target="p_green"/>
+
+      <transition id="t_green_to_yellow"></transition>
+      <arc source="p_green" target="t_green_to_yellow"/>
+      <arc source="t_green_to_yellow" target="p_yellow"/>
+
+      <transition id="t_yellow_to_red"></transition>
+      <arc source="p_yellow" target="t_yellow_to_red"/>
+      <arc source="t_yellow_to_red" target="p_red"/>
+    </page>
+  </net>
+</pnml>

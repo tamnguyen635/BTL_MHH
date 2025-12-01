@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pnml xmlns="http://www.pnml.org/version-2009/std">
+  <net id="DiningPhilosophers3" type="http://www.pnml.org/version-2009/grammar/ptnet">
+    <page id="page1">
+      <place id="fork1"><initialMarking><text>1</text></initialMarking></place>
+      <place id="fork2"><initialMarking><text>1</text></initialMarking></place>
+      <place id="fork3"><initialMarking><text>1</text></initialMarking></place>
+
+      <place id="phil1_thinking"><initialMarking><text>1</text></initialMarking></place>
+      <place id="phil1_wait"></place>
+      <place id="phil1_eating"></place>
+
+      <transition id="t1_take_left"></transition>
+      <arc id="a1_1" source="phil1_thinking" target="t1_take_left"/>
+      <arc id="a1_2" source="fork1" target="t1_take_left"/>
+      <arc id="a1_3" source="t1_take_left" target="phil1_wait"/>
+
+      <transition id="t1_take_right"></transition>
+      <arc id="a1_4" source="phil1_wait" target="t1_take_right"/>
+      <arc id="a1_5" source="fork2" target="t1_take_right"/>
+      <arc id="a1_6" source="t1_take_right" target="phil1_eating"/>
+
+      <transition id="t1_put_down"></transition>
+      <arc id="a1_7" source="phil1_eating" target="t1_put_down"/>
+      <arc id="a1_8" source="t1_put_down" target="phil1_thinking"/>
+      <arc id="a1_9" source="t1_put_down" target="fork1"/>
+      <arc id="a1_10" source="t1_put_down" target="fork2"/>
+
+
+      <place id="phil2_thinking"><initialMarking><text>1</text></initialMarking></place>
+      <place id="phil2_wait"></place>
+      <place id="phil2_eating"></place>
+
+      <transition id="t2_take_left"></transition>
+      <arc id="a2_1" source="phil2_thinking" target="t2_take_left"/>
+      <arc id="a2_2" source="fork2" target="t2_take_left"/>
+      <arc id="a2_3" source="t2_take_left" target="phil2_wait"/>
+
+      <transition id="t2_take_right"></transition>
+      <arc id="a2_4" source="phil2_wait" target="t2_take_right"/>
+      <arc id="a2_5" source="fork3" target="t2_take_right"/>
+      <arc id="a2_6" source="t2_take_right" target="phil2_eating"/>
+
+      <transition id="t2_put_down"></transition>
+      <arc id="a2_7" source="phil2_eating" target="t2_put_down"/>
+      <arc id="a2_8" source="t2_put_down" target="phil2_thinking"/>
+      <arc id="a2_9" source="t2_put_down" target="fork2"/>
+      <arc id="a2_10" source="t2_put_down" target="fork3"/>
+
+
+      <place id="phil3_thinking"><initialMarking><text>1</text></initialMarking></place>
+      <place id="phil3_wait"></place>
+      <place id="phil3_eating"></place>
+
+      <transition id="t3_take_left"></transition>
+      <arc id="a3_1" source="phil3_thinking" target="t3_take_left"/>
+      <arc id="a3_2" source="fork3" target="t3_take_left"/>
+      <arc id="a3_3" source="t3_take_left" target="phil3_wait"/>
+
+      <transition id="t3_take_right"></transition>
+      <arc id="a3_4" source="phil3_wait" target="t3_take_right"/>
+      <arc id="a3_5" source="fork1" target="t3_take_right"/>
+      <arc id="a3_6" source="t3_take_right" target="phil3_eating"/>
+
+      <transition id="t3_put_down"></transition>
+      <arc id="a3_7" source="phil3_eating" target="t3_put_down"/>
+      <arc id="a3_8" source="t3_put_down" target="phil3_thinking"/>
+      <arc id="a3_9" source="t3_put_down" target="fork3"/>
+      <arc id="a3_10" source="t3_put_down" target="fork1"/>
+    </page>
+  </net>
+</pnml>
