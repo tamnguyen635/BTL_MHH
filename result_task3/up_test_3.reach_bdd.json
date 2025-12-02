@@ -1,0 +1,75 @@
+{
+  "places": [
+    {
+      "id": "p_buffer_empty",
+      "index": 0
+    },
+    {
+      "id": "p_buffer_full",
+      "index": 1
+    },
+    {
+      "id": "p_cons_eating",
+      "index": 2
+    },
+    {
+      "id": "p_cons_ready",
+      "index": 3
+    },
+    {
+      "id": "p_prod_ready",
+      "index": 4
+    },
+    {
+      "id": "p_prod_working",
+      "index": 5
+    }
+  ],
+  "initial_marking": [
+    1,
+    0,
+    0,
+    1,
+    1,
+    0
+  ],
+  "reachable_count": 4,
+  "bfs_depth": 3,
+  "reachable_markings": [
+    [
+      0,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  ],
+  "bdd_time_s": 0.00048269999933836516,
+  "enumeration_time_s": 5.3499999921768904e-05,
+  "symbolic_time_s": 0.00048269999933836516
+}

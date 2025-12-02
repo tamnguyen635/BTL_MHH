@@ -1,0 +1,43 @@
+{
+  "places": [
+    {
+      "id": "p_draft",
+      "index": 0
+    },
+    {
+      "id": "p_review",
+      "index": 1
+    },
+    {
+      "id": "p_signed",
+      "index": 2
+    }
+  ],
+  "initial_marking": [
+    1,
+    0,
+    0
+  ],
+  "reachable_count": 3,
+  "bfs_depth": 2,
+  "reachable_markings": [
+    [
+      0,
+      0,
+      1
+    ],
+    [
+      0,
+      1,
+      0
+    ],
+    [
+      1,
+      0,
+      0
+    ]
+  ],
+  "bdd_time_s": 0.000263200000517827,
+  "enumeration_time_s": 3.6100000215810724e-05,
+  "symbolic_time_s": 0.000263200000517827
+}
