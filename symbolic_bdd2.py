@@ -5,222 +5,122 @@ import time
 import sys
 from pathlib import Path
 
-# --- IMPORT MODULE ---
 try:
-    # Import từ common.py
-    from common import get_petri_net_data, parse_pnml
-except ImportError:
-    print("CRITICAL ERROR: Missing 'common.py'. Please ensure it exists in the same directory.")
+    from pnml_parser import parse_pnml
+    from bdd_utils import build_transition_relation, marking_to_bdd, enumerate_markings_from_bdd, varname, varname_prime
+except ImportError as e:
+    print(f"Lỗi Import: {e}")
     sys.exit(1)
 
-try:
-    # Import từ bdd_utils.py
-    from bdd_utils import (
-        build_transition_relation, 
-        marking_to_bdd, 
-        enumerate_markings_from_bdd,
-        varname, varname_prime
-    )
-except ImportError:
-    print("CRITICAL ERROR: Miss'bdd_utils.py'")
-    sys.exit(1)
-
-def compute_reachable_states_bdd(petri_model, max_enum=10000):
-    """
-    using Frontier-Set optimization.
-
-    """
-    # Load BDD library
+def symbolic_reachability_frontier(net, enum_limit=10000, verbose=False):
+    """Thuật toán Frontier-Based BFS"""
     try:
-        from dd import autoref as _bdd_lib
+        from dd import autoref as _bdd
     except ImportError:
-        raise RuntimeError("pip install dd")
+        raise RuntimeError("Thiếu thư viện 'dd'. Hãy chạy: pip install dd")
 
-    # 1. Extract Model Data
-    place_list = petri_model['places']
-    trans_list = petri_model['transitions']
-    num_places = len(place_list)
-
-    # Initialize BDD Manager
-    manager = _bdd_lib.BDD()
+    places = net['places']
+    transitions = net['transitions']
+    n = len(places)
+    bdd = _bdd.BDD()
     
-  
-    curr_vars = [varname(i) for i in range(num_places)]
-    next_vars = [varname_prime(i) for i in range(num_places)]
+    x_vars = [varname(i) for i in range(n)]
+    y_vars = [varname_prime(i) for i in range(n)]
+    for v in x_vars + y_vars: bdd.declare(v)
+
+    if verbose: print(f"-> Xây dựng quan hệ chuyển tiếp ({len(transitions)} transitions)...")
+    R_list = [build_transition_relation(bdd, n, t) for t in transitions]
+
+    start_marking = net['initial_marking']
+    bdd_M0 = marking_to_bdd(bdd, x_vars, start_marking)
     
-    for v in curr_vars + next_vars:
-        manager.declare(v)
-
-
-    rel_list = []
-    for t_obj in trans_list:
-        # Build relation for single transition
-        rel_t = build_transition_relation(manager, num_places, t_obj)
-        rel_list.append(rel_t)
-
-
-    init_marking_vec = petri_model['initial_marking']
-    bdd_init = marking_to_bdd(manager, curr_vars, init_marking_vec)
+    reachable = bdd_M0    
+    frontier = bdd_M0     
+    rename_map = {varname_prime(i): varname(i) for i in range(n)}
     
-    # --- FRONTIER BFS ALGORITHM ---
-    visited_bdd = bdd_init      # Set of ALL reached states
-    frontier_bdd = bdd_init     # Set of NEWLY found states
+    iteration = 0
+    t0 = time.perf_counter()
+
+    while frontier != bdd.false:
+        iteration += 1
+        if verbose: print(f"[Iter {iteration}] Mở rộng biên...")
+        img_old_total = bdd.false
+        for Rt in R_list:
+            conj = frontier & Rt 
+            if conj != bdd.false:
+                img_new = bdd.quantify(conj, x_vars, forall=False)
+                img_old_total |= bdd.let(rename_map, img_new)
+
+        new_states = img_old_total & (~reachable)
+        reachable |= new_states
+        frontier = new_states
+        
+    t1 = time.perf_counter()
     
-    # Map for renaming Next vars -> Current vars
-    swap_map = {varname_prime(i): varname(i) for i in range(num_places)}
-    
-    step_count = 0
-    start_time = time.perf_counter()
+    t2 = time.perf_counter()
+    markings = []
+    if enum_limit > 0:
+        markings = enumerate_markings_from_bdd(bdd, reachable, x_vars, limit=enum_limit)
+    t3 = time.perf_counter()
 
-    while True:
-        # Termination condition: No new states in frontier
-        if frontier_bdd == manager.false:
-            break
-
-        step_count += 1
-        
-        # Compute Image: Next = Exists(Frontier & Relation)
-        accumulated_image = manager.false
-        
-        for rel_t in rel_list:
-            # Conjunction: Intersection of Frontier and Transition Logic
-            intersection = frontier_bdd & rel_t 
-            
-      
-            if intersection != manager.false:
-            
-                img_next_vars = manager.quantify(intersection, curr_vars, forall=False)
-                
-     
-                img_curr_vars = manager.let(swap_map, img_next_vars)
-                
-                # Union with accumulated results
-                accumulated_image = accumulated_image | img_curr_vars
-
-        diff_states = accumulated_image & (~visited_bdd)
-        
-        # Update Visited set
-        visited_bdd = visited_bdd | diff_states
-        
-        frontier_bdd = diff_states
-        
-    # Algorithm finished
-    exec_time = time.perf_counter() - start_time
-    depth = step_count - 1 
-
-    # 5. Enumeration
-    enum_start = time.perf_counter()
-    state_list = []
-    if max_enum > 0:
-        state_list = enumerate_markings_from_bdd(manager, visited_bdd, curr_vars, limit=max_enum)
-    enum_time = time.perf_counter() - enum_start
-
-    total_count = len(state_list)
-    count_display = f">={max_enum}" if (max_enum and total_count >= max_enum) else str(total_count)
-
-    # 6. Construct Result Dictionary
-    result_data = {
-        'places': [{'id': p['id'], 'index': p['index']} for p in place_list],
-        'transitions': [{'id': t['id'], 'index': i} for i, t in enumerate(trans_list)],
-        'initial_marking': init_marking_vec,
-        'reachable_count': total_count,
-        'reachable_count_str': count_display,
-        'bfs_depth': depth,
-        'reachable_markings': state_list,
-        'bdd_time_s': exec_time,
-        'enumeration_time_s': enum_time,
-        # Objects for downstream tasks (Task 4/5)
-        'bdd_manager': manager,       
-        'reachable_bdd': visited_bdd,
-        'variables': curr_vars 
+    return {
+        'places': [{'id': p['id'], 'index': p['index']} for p in places],
+        'initial_marking': start_marking,
+        'reachable_count': len(markings),
+        'bfs_depth': iteration - 1,
+        'reachable_markings': markings,
+        'bdd_time_s': t1 - t0,
+        'enumeration_time_s': t3 - t2,
     }
-    return result_data
 
-def main_execution():
-    """
-    Main entry point 
-    """
-    parser = argparse.ArgumentParser(description="Symbolic Reachability Analysis")
-    parser.add_argument('pnml', nargs='?', help='Path to PNML file')
-    parser.add_argument('--out', help='Output JSON path', default=None)
-    parser.add_argument('--enum_limit', type=int, default=10000, help='Max states to enumerate')
-   
+def save_result_to_json(res, pnml_path_str):
+    """Hàm phụ trợ để lưu file vào folder result_task3"""
+    pnml_path = Path(pnml_path_str)
     
-    args = parser.parse_args()
+    # 1. Tạo folder output nếu chưa có
+    output_dir = Path("result_task3")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
+    # 2. Tạo tên file output (lấy tên gốc, bỏ phần thư mục cha nếu có)
+    # Ví dụ input: testcase/deadlock.pnml -> output: result_task3/deadlock.reach_bdd.json
+    file_name = pnml_path.with_suffix('.reach_bdd.json').name
+    out_path = output_dir / file_name
     
-    model_data = get_petri_net_data()
-
-    # Determine paths
-    if len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
-        input_path = Path(sys.argv[1])
-    else:
-        input_path = Path("test_task3.pnml") 
-
-    # --- EXECUTE ANALYSIS ---
-    try:
-        print(f"--- Starting BDD Analysis ---")
-        results = compute_reachable_states_bdd(
-            model_data,
-            max_enum=args.enum_limit
-        )
-    except Exception as e:
-        print(f"RUNTIME ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-        return
-
-    # --- EXPORT RESULTS ---
-    results['symbolic_time_s'] = results['bdd_time_s']
-    output_filename = args.out or (input_path.with_suffix('.reach_bdd.json').name)
-    
-  
-    json_safe_data = results.copy()
-    keys_to_remove = ['bdd_manager', 'reachable_bdd', 'variables']
-    for k in keys_to_remove:
-        if k in json_safe_data: del json_safe_data[k]
-
-    with open(output_filename, 'w', encoding='utf-8') as f:
-        json.dump(json_safe_data, f, indent=2)
-        
-    print(f"\n--- ANALYSIS COMPLETE ---")
-    print(f"Output File  : {output_filename}")
-    print(f"Total States : {results['reachable_count_str']}")
-    print(f"BFS Depth    : {results['bfs_depth']}")
-    print(f"Compute Time : {results['bdd_time_s']:.6f}s")
-
-def execute_bdd_analysis(file_path_str, limit=10000):
-    """
-    
-    """
-    fpath = Path(file_path_str)
-    if not fpath.exists():
-        print(f"Error: File not found {fpath}")
-        return None, None
-
-    # Use parser from common
-    model_data = parse_pnml(str(fpath))
-    if model_data is None: return None, None
-
-    try:
-    
-        res = compute_reachable_states_bdd(model_data, limit)
-    except Exception as e:
-        print(f"BDD Error: {e}")
-        return None, None
-
     res['symbolic_time_s'] = res['bdd_time_s']
-    json_path = fpath.with_suffix('.reach_bdd.json').name
-    
-    # JSON Cleanup
-    json_data = res.copy()
-    for k in ['bdd_manager', 'reachable_bdd', 'variables']:
-        if k in json_data: del json_data[k]
-
-    with open(json_path, 'w', encoding='utf-8') as f:
-        json.dump(json_data, f, indent=2)
+    with open(out_path, 'w', encoding='utf-8') as f:
+        json.dump(res, f, indent=2)
         
-    return res, json_path
+    return str(out_path)
+
+def run_task3(pnml_path_str, enum_limit=10000, verbose=False):
+    """Wrapper cho Task 4 gọi"""
+    if not Path(pnml_path_str).exists():
+        print(f"Lỗi: Không tìm thấy file {pnml_path_str}")
+        return None, None
+
+    net_data = parse_pnml(str(pnml_path_str))
+    if net_data is None: return None, None
+
+    try:
+        res = symbolic_reachability_frontier(net_data, enum_limit, verbose)
+        # Gọi hàm lưu file chuẩn folder
+        out_path = save_result_to_json(res, pnml_path_str)
+        return res, out_path
+    except Exception as e:
+        print(f"Lỗi BDD: {e}")
+        return None, None
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('pnml', help='File PNML')
+    ap.add_argument('--out', help='File xuất (Tùy chọn)')
+    args = ap.parse_args()
+
+    # Nếu chạy trực tiếp thì gọi hàm wrapper luôn cho đồng bộ
+    res, saved_path = run_task3(args.pnml)
+    if res:
+        print(f"\n--- HOÀN THÀNH TASK 3 ---")
+        print(f"Output saved to: {saved_path}")
 
 if __name__ == '__main__':
-    main_execution()
+    main()
